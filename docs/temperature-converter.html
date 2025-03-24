@@ -2,8 +2,10 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="description" content="A simple temperature converter between Fahrenheit and Celsius">
     <title>Temperature Converter</title>
     <link rel="manifest" href="manifest.json">
@@ -327,6 +329,21 @@
         
         // Initialize with default values
         updateFromSlider();
+        
+        // Handle fullscreen display
+        window.addEventListener('load', function() {
+            // Hide the address bar on mobile browsers
+            window.scrollTo(0, 1);
+            
+            // Request fullscreen when possible (needs user interaction)
+            document.addEventListener('click', function() {
+                if (document.documentElement.requestFullscreen && !document.fullscreenElement) {
+                    document.documentElement.requestFullscreen().catch(err => {
+                        console.log('Error attempting to enable fullscreen:', err);
+                    });
+                }
+            }, { once: true });
+        });
     </script>
 
     <!-- Service Worker Registration -->
