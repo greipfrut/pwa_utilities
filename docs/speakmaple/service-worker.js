@@ -1,4 +1,4 @@
-const CACHE_NAME = 'temperature-converter-v1';
+const CACHE_NAME = 'unit-converter-v1';
 const ASSETS_TO_CACHE = [
   'index.html',
   'manifest.json',

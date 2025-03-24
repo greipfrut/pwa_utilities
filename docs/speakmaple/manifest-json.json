@@ -1,7 +1,7 @@
 {
-  "name": "Temperature Converter",
-  "short_name": "TempConvert",
-  "description": "Convert temperatures between Fahrenheit and Celsius",
+  "name": "Multi-Unit Converter",
+  "short_name": "Converter",
+  "description": "Convert temperature, distance, and currency with a simple interface",
   "start_url": "index.html",
   "display": "fullscreen",
   "background_color": "#121212",

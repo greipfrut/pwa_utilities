@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#121212">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="description" content="A multi-unit converter for temperature, distance, and currency">
+    <title>Unit Converter</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" href="icon-192x192.png">
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --primary: #bb86fc;
+            --secondary: #03dac6;
+            --text: #e0e0e0;
+            --secondary-text: #b0b0b0;
+            --input-bg: rgba(0, 0, 0, 0.2);
+            --shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+        }
+        
+        html {
+            height: 100%;
+            height: -webkit-fill-available;
+            overflow: hidden;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            height: -webkit-fill-available;
+            transition: background-color 0.3s;
+            position: fixed;
+            width: 100%;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            width: 100%;
+            height: 100%;
+            overflow-y: auto;
+            scroll-snap-type: y mandatory;
+            position: relative;
+        }
+        
+        .background-gradient {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at top right, rgba(187, 134, 252, 0.15), transparent 60%),
+                        radial-gradient(circle at bottom left, rgba(3, 218, 198, 0.1), transparent 60%);
+            z-index: -1;
+            pointer-events: none;
+        }
+        
+        .page-section {
+            min-height: 100%;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            box-sizing: border-box;
+            scroll-snap-align: start;
+        }
+        
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: var(--shadow);
+            padding: 2rem;
+            width: 90%;
+            max-width: 600px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        h1 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+        
+        h2 {
+            margin-top: 0;
+            margin-bottom: 1rem;
+            font-weight: 600;
+            font-size: 1.5rem;
+            color: var(--secondary);
+        }
+        
+        .converter-layout {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+        
+        .units-display {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            flex: 1;
+        }
+        
+        .unit-box {
+            background: var(--input-bg);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: transform 0.2s, box-shadow 0.2s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        
+        .unit-box:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+        
+        .unit-input-group {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 100%;
+        }
+        
+        .unit-input {
+            font-size: 2rem;
+            font-weight: bold;
+            background: transparent;
+            border: none;
+            color: var(--text);
+            width: 100px;
+            text-align: right;
+            -moz-appearance: textfield;
+        }
+        
+        .unit-input::-webkit-outer-spin-button,
+        .unit-input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        
+        .unit-input:focus {
+            outline: none;
+            border-bottom: 2px solid var(--primary);
+        }
+        
+        .unit-symbol {
+            font-size: 2rem;
+            margin-left: 5px;
+        }
+        
+        .unit-name {
+            font-size: 1rem;
+            color: var(--secondary-text);
+            margin-top: 0.5rem;
+        }
+        
+        .slider-container {
+            height: 300px;
+            display: flex;
+            flex-direction: row;
+            align-items: center;
+            position: relative;
+            width: 60px;
+        }
+        
+        .slider-vertical {
+            -webkit-appearance: none;
+            appearance: none;
+            height: 300px;
+            width: 8px;
+            background: #333;
+            outline: none;
+            border-radius: 4px;
+            writing-mode: bt-lr;
+            -webkit-appearance: slider-vertical;
+            writing-mode: vertical-lr;
+            transform: rotate(180deg);
+        }
+        
+        .slider-vertical::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+        }
+        
+        .slider-vertical::-moz-range-thumb {
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            background: var(--primary);
+            cursor: pointer;
+            transition: background 0.15s ease, transform 0.15s ease;
+            border: none;
+        }
+        
+        .slider-vertical::-webkit-slider-thumb:hover {
+            background: #cf9fff;
+            transform: scale(1.1);
+        }
+        
+        .slider-vertical::-moz-range-thumb:hover {
+            background: #cf9fff;
+            transform: scale(1.1);
+        }
+        
+        .slider-label {
+            position: absolute;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            color: var(--secondary-text);
+            font-size: 0.9rem;
+            left: -35px;
+        }
+        
+        .nav-dots {
+            position: fixed;
+            top: 50%;
+            right: 10px;
+            transform: translateY(-50%);
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 10;
+        }
+        
+        .nav-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: rgba(255, 255, 255, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        
+        .nav-dot.active {
+            background-color: var(--primary);
+            transform: scale(1.2);
+        }
+        
+        .exchange-rate-container {
+            margin-top: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .exchange-rate-input {
+            width: 60px;
+            padding: 5px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid #444;
+            border-radius: 4px;
+            color: var(--text);
+            text-align: center;
+            font-size: 0.9rem;
+        }
+        
+        .exchange-rate-text {
+            font-size: 0.9rem;
+            color: var(--secondary-text);
+        }
+        
+        /* For smaller screens */
+        @media (max-width: 650px) {
+            .converter-layout {
+                flex-direction: column;
+                align-items: center;
+                gap: 30px;
+            }
+            
+            .units-display {
+                width: 100%;
+            }
+            
+            .slider-container {
+                width: 90%;
+                height: 250px;
+                justify-content: center;
+            }
+            
+            .container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="background-gradient"></div>
+    
+    <div class="app-container">
+        <!-- Temperature Section -->
+        <section class="page-section" id="temperature-section">
+            <div class="container">
+                <h1>Unit Converter</h1>
+                <h2>Temperature</h2>
+                
+                <div class="converter-layout">
+                    <div class="units-display">
+                        <div class="unit-box">
+                            <div class="unit-input-group">
+                                <input type="number" id="fahrenheit-input" class="unit-input" value="32">
+                                <span class="unit-symbol">°F</span>
+                            </div>
+                            <p class="unit-name">Fahrenheit</p>
+                        </div>
+                        <div class="unit-box">
+                            <div class="unit-input-group">
+                                <input type="number" id="celsius-input" class="unit-input" value="0">
+                                <span class="unit-symbol">°C</span>
+                            </div>
+                            <p class="unit-name">Celsius</p>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>150 °F</span>
+                            <span>-50 °F</span>
+                        </div>
+                        <input type="range" min="-50" max="150" value="32" class="slider-vertical" id="temp-slider" orient="vertical">
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Kilometers to Miles Section -->
+        <section class="page-section" id="km-miles-section">
+            <div class="container">
+                <h2>Distance (km ⟷ miles)</h2>
+                
+                <div class="converter-layout">
+                    <div class="units-display">
+                        <div class="unit-box">
+                            <div class="unit-input-group">
+                                <input type="number" id="km-input" class="unit-input" value="1">
+                                <span class="unit-symbol">km</span>
+                            </div>
+                            <p class="unit-name">Kilometers</p>
+                        </div>
+                        <div class="unit-box">
+                            <div class="unit-input-group">
+                                <input type="number" id="miles-input" class="unit-input" value="0.62">
+                                <span class="unit-symbol">mi</span>
+                            </div>
+                            <p class="unit-name">Miles</p>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>100 km</span>
+                            <span>0 km</span>
+                        </div>
+                        <input type="range" min="0" max="100" value="1" class="slider-vertical" id="km-slider" orient="vertical">
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- Meters to Feet Section -->
+        <section class="page-section" id="m-ft-section">
+            <div class="container">
+                <h2>Distance (m ⟷ ft)</h2>
+                
+                <div class="converter-layout">
+                    <div class="units-display">
+                        <div class="unit-box">
+                            <div class="unit-input-group">
+                                <input type="number" id="meters-input" class="unit-input" value="1">
+                                <span class="unit-symbol">m</span>
+                            </div>
+                            <p class="unit-name">Meters</p>
+                        </div>
+                        <div class="unit-box">
+                            <div class="unit-input-group">
+                                <input type="number" id="feet-input" class="unit-input" value="3.28">
+                                <span class="unit-symbol">ft</span>
+                            </div>
+                            <p class="unit-name">Feet</p>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>50 m</span>
+                            <span>0 m</span>
+                        </div>
+                        <input type="range" min="0" max="50" value="1" class="slider-vertical" id="meters-slider" orient="vertical">
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- USD to CAD Section -->
+        <section class="page-section" id="currency-section">
+            <div class="container">
+                <h2>Currency (USD ⟷ CAD)</h2>
+                
+                <div class="converter-layout">
+                    <div class="units-display">
+                        <div class="unit-box">
+                            <div class="unit-input-group">
+                                <input type="number" id="usd-input" class="unit-input" value="1">
+                                <span class="unit-symbol">$</span>
+                            </div>
+                            <p class="unit-name">US Dollar</p>
+                        </div>
+                        <div class="unit-box">
+                            <div class="unit-input-group">
+                                <input type="number" id="cad-input" class="unit-input" value="1.43">
+                                <span class="unit-symbol">C$</span>
+                            </div>
+                            <p class="unit-name">Canadian Dollar</p>
+                        </div>
+                        <div class="exchange-rate-container">
+                            <span class="exchange-rate-text">Exchange Rate: 1 USD =</span>
+                            <input type="number" id="exchange-rate" class="exchange-rate-input" value="1.43" step="0.01" min="0.01">
+                            <span class="exchange-rate-text">CAD</span>
+                        </div>
+                    </div>
+                    
+                    <div class="slider-container">
+                        <div class="slider-label">
+                            <span>1000 USD</span>
+                            <span>0 USD</span>
+                        </div>
+                        <input type="range" min="0" max="1000" value="1" class="slider-vertical" id="usd-slider" orient="vertical">
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <!-- Navigation Dots -->
+    <div class="nav-dots">
+        <div class="nav-dot active" data-section="temperature-section"></div>
+        <div class="nav-dot" data-section="km-miles-section"></div>
+        <div class="nav-dot" data-section="m-ft-section"></div>
+        <div class="nav-dot" data-section="currency-section"></div>
+    </div>
+    
+    <script>
+        // Temperature conversion
+        const tempSlider = document.getElementById('temp-slider');
+        const fahrenheitInput = document.getElementById('fahrenheit-input');
+        const celsiusInput = document.getElementById('celsius-input');
+        
+        function convertToCelsius(fahrenheit) {
+            return (fahrenheit - 32) * 5 / 9;
+        }
+        
+        function convertToFahrenheit(celsius) {
+            return (celsius * 9 / 5) + 32;
+        }
+        
+        function updateFromTempSlider() {
+            const fahrenheit = parseFloat(tempSlider.value);
+            const celsius = convertToCelsius(fahrenheit);
+            
+            fahrenheitInput.value = fahrenheit.toFixed(1);
+            celsiusInput.value = celsius.toFixed(1);
+            
+            updateBackgroundColor(fahrenheit);
+        }
+        
+        function updateFromFahrenheit() {
+            const fahrenheit = parseFloat(fahrenheitInput.value);
+            if (isNaN(fahrenheit)) return;
+            
+            tempSlider.value = fahrenheit;
+            celsiusInput.value = convertToCelsius(fahrenheit).toFixed(1);
+            
+            updateBackgroundColor(fahrenheit);
+        }
+        
+        function updateFromCelsius() {
+            const celsius = parseFloat(celsiusInput.value);
+            if (isNaN(celsius)) return;
+            
+            const fahrenheit = convertToFahrenheit(celsius);
+            fahrenheitInput.value = fahrenheit.toFixed(1);
+            tempSlider.value = fahrenheit;
+            
+            updateBackgroundColor(fahrenheit);
+        }
+        
+        function updateBackgroundColor(fahrenheit) {
+            let hue;
+            let saturation;
+            
+            if (fahrenheit < 0) {
+                // Cold - blue tones
+                hue = 220;
+                saturation = Math.min((-fahrenheit) * 0.2, 30);
+            } else if (fahrenheit > 80) {
+                // Hot - red/orange tones
+                hue = 360 - (fahrenheit - 80) * 0.5;
+                hue = Math.max(hue, 0);
+                saturation = Math.min((fahrenheit - 80) * 0.3, 40);
+            } else {
+                // Neutral
+                document.body.style.backgroundColor = 'var(--bg-color)';
+                return;
+            }
+            
+            const backgroundColor = `hsl(${hue}, ${saturation}%, 8%)`;
+            document.body.style.backgroundColor = backgroundColor;
+        }
+        
+        tempSlider.addEventListener('input', updateFromTempSlider);
+        fahrenheitInput.addEventListener('input', updateFromFahrenheit);
+        celsiusInput.addEventListener('input', updateFromCelsius);
+        
+        // Kilometers to Miles conversion
+        const kmSlider = document.getElementById('km-slider');
+        const kmInput = document.getElementById('km-input');
+        const milesInput = document.getElementById('miles-input');
+        
+        function kmToMiles(km) {
+            return km * 0.621371;
+        }
+        
+        function milesToKm(miles) {
+            return miles / 0.621371;
+        }
+        
+        function updateFromKmSlider() {
+            const km = parseFloat(kmSlider.value);
+            const miles = kmToMiles(km);
+            
+            kmInput.value = km.toFixed(2);
+            milesInput.value = miles.toFixed(2);
+        }
+        
+        function updateFromKmInput() {
+            const km = parseFloat(kmInput.value);
+            if (isNaN(km)) return;
+            
+            const miles = kmToMiles(km);
+            milesInput.value = miles.toFixed(2);
+            
+            // Only update slider if within range
+            if (km >= 0 && km <= 100) {
+                kmSlider.value = km;
+            }
+        }
+        
+        function updateFromMilesInput() {
+            const miles = parseFloat(milesInput.value);
+            if (isNaN(miles)) return;
+            
+            const km = milesToKm(miles);
+            kmInput.value = km.toFixed(2);
+            
+            // Only update slider if within range
+            if (km >= 0 && km <= 100) {
+                kmSlider.value = km;
+            }
+        }
+        
+        kmSlider.addEventListener('input', updateFromKmSlider);
+        kmInput.addEventListener('input', updateFromKmInput);
+        milesInput.addEventListener('input', updateFromMilesInput);
+        
+        // Meters to Feet conversion
+        const metersSlider = document.getElementById('meters-slider');
+        const metersInput = document.getElementById('meters-input');
+        const feetInput = document.getElementById('feet-input');
+        
+        function metersToFeet(meters) {
+            return meters * 3.28084;
+        }
+        
+        function feetToMeters(feet) {
+            return feet / 3.28084;
+        }
+        
+        function updateFromMetersSlider() {
+            const meters = parseFloat(metersSlider.value);
+            const feet = metersToFeet(meters);
+            
+            metersInput.value = meters.toFixed(2);
+            feetInput.value = feet.toFixed(2);
+        }
+        
+        function updateFromMetersInput() {
+            const meters = parseFloat(metersInput.value);
+            if (isNaN(meters)) return;
+            
+            const feet = metersToFeet(meters);
+            feetInput.value = feet.toFixed(2);
+            
+            // Only update slider if within range
+            if (meters >= 0 && meters <= 50) {
+                metersSlider.value = meters;
+            }
+        }
+        
+        function updateFromFeetInput() {
+            const feet = parseFloat(feetInput.value);
+            if (isNaN(feet)) return;
+            
+            const meters = feetToMeters(feet);
+            metersInput.value = meters.toFixed(2);
+            
+            // Only update slider if within range
+            if (meters >= 0 && meters <= 50) {
+                metersSlider.value = meters;
+            }
+        }
+        
+        metersSlider.addEventListener('input', updateFromMetersSlider);
+        metersInput.addEventListener('input', updateFromMetersInput);
+        feetInput.addEventListener('input', updateFromFeetInput);
+        
+        // USD to CAD conversion
+        const usdSlider = document.getElementById('usd-slider');
+        const usdInput = document.getElementById('usd-input');
+        const cadInput = document.getElementById('cad-input');
+        const exchangeRateInput = document.getElementById('exchange-rate');
+        
+        function usdToCad(usd, rate) {
+            return usd * rate;
+        }
+        
+        function cadToUsd(cad, rate) {
+            return cad / rate;
+        }
+        
+        function updateFromUsdSlider() {
+            const usd = parseFloat(usdSlider.value);
+            const rate = parseFloat(exchangeRateInput.value);
+            const cad = usdToCad(usd, rate);
+            
+            usdInput.value = usd.toFixed(2);
+            cadInput.value = cad.toFixed(2);
+        }
+        
+        function updateFromUsdInput() {
+            const usd = parseFloat(usdInput.value);
+            if (isNaN(usd)) return;
+            
+            const rate = parseFloat(exchangeRateInput.value);
+            const cad = usdToCad(usd, rate);
+            cadInput.value = cad.toFixed(2);
+            
+            // Only update slider if within range
+            if (usd >= 0 && usd <= 1000) {
+                usdSlider.value = usd;
+            }
+        }
+        
+        function updateFromCadInput() {
+            const cad = parseFloat(cadInput.value);
+            if (isNaN(cad)) return;
+            
+            const rate = parseFloat(exchangeRateInput.value);
+            const usd = cadToUsd(cad, rate);
+            usdInput.value = usd.toFixed(2);
+            
+            // Only update slider if within range
+            if (usd >= 0 && usd <= 1000) {
+                usdSlider.value = usd;
+            }
+        }
+        
+        function updateExchangeRate() {
+            const rate = parseFloat(exchangeRateInput.value);
+            if (isNaN(rate) || rate <= 0) {
+                exchangeRateInput.value = 1.43;
+                return;
+            }
+            
+            // Update the CAD value based on the new rate
+            const usd = parseFloat(usdInput.value);
+            if (!isNaN(usd)) {
+                const cad = usdToCad(usd, rate);
+                cadInput.value = cad.toFixed(2);
+            }
+        }
+        
+        usdSlider.addEventListener('input', updateFromUsdSlider);
+        usdInput.addEventListener('input', updateFromUsdInput);
+        cadInput.addEventListener('input', updateFromCadInput);
+        exchangeRateInput.addEventListener('change', updateExchangeRate);
+        exchangeRateInput.addEventListener('input', updateExchangeRate);
+        
+        // Navigation dots functionality
+        const navDots = document.querySelectorAll('.nav-dot');
+        const sections = document.querySelectorAll('.page-section');
+        const appContainer = document.querySelector('.app-container');
+        
+        // Update active dot based on scroll position
+        appContainer.addEventListener('scroll', () => {
+            const currentPosition = appContainer.scrollTop;
+            
+            sections.forEach((section, index) => {
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                
+                if (currentPosition >= sectionTop - sectionHeight / 3 && 
+                    currentPosition < sectionTop + sectionHeight - sectionHeight / 3) {
+                    navDots.forEach(dot => dot.classList.remove('active'));
+                    navDots[index].classList.add('active');
+                }
+            });
+        });
+        
+        // Scroll to section when clicking on a nav dot
+        navDots.forEach(dot => {
+            dot.addEventListener('click', () => {
+                const targetId = dot.getAttribute('data-section');
+                const targetSection = document.getElementById(targetId);
+                
+                appContainer.scrollTo({
+                    top: targetSection.offsetTop,
+                    behavior: 'smooth'
+                });
+                
+                navDots.forEach(d => d.classList.remove('active'));
+                dot.classList.add('active');
+            });
+        });
+        
+        // Initialize all converters
+        function initializeAllConverters() {
+            updateFromTempSlider();
+            updateFromKmSlider();
+            updateFromMetersSlider();
+            updateFromUsdSlider();
+        }
+        
+        // Handle fullscreen display
+        window.addEventListener('load', function() {
+            // Force the page to be at the right height to hide address bar
+            document.documentElement.style.height = '100%';
+            document.body.style.height = '100%';
+            
+            // Try to hide the address bar on load
+            setTimeout(function() {
+                window.scrollTo(0, 1);
+            }, 0);
+            
+            // Try again when device orientation changes
+            window.addEventListener('orientationchange', function() {
+                setTimeout(function() {
+                    window.scrollTo(0, 1);
+                }, 50);
+            });
+            
+            // Initialize all converters
+            initializeAllConverters();
+        });
+    </script>
+
+    <!-- Service Worker Registration -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('Service Worker registered with scope:', registration.scope);
+                    })
+                    .catch(error => {
+                        console.error('Service Worker registration failed:', error);
+                    });
+            });
+        }
+    </script>
+</body>
+</html>
